@@ -13,13 +13,13 @@ def request(method, url, headers='', body=''):
     sock = socket_client(host, port, is_secure)
 
     # Build the HTTP request string
-    request = build_request(method, host, uri, headers, body)
+    request_string = build_request(method, host, uri, headers, body)
 
     # Print the request for debugging purposes
-    print(request)
+    print(request_string)
 
     # Send the HTTP request to the server
-    sock.sendall(request.encode())
+    sock.sendall(request_string.encode())
 
     # Initialize an empty response
     response = b''
@@ -40,6 +40,18 @@ def request(method, url, headers='', body=''):
     response = response.decode()  # Decode the response from bytes to string
 
     status_code, response_headers, response_body = parse_response(response)
+
+    #Redirect if necessary
+
+    if (status_code.startswith("300") or status_code.startswith("305")) and "location" in dict(response_headers):
+        print("Redirecting to: ", dict(response_headers)["location"])
+        status_code, response_headers, response_body = request(method, dict(response_headers)["location"], headers, response_body)
+    elif (status_code.startswith("301") or status_code.startswith("302") or status_code.startswith("307")) and "location" in dict(response_headers) and (method == "GET" or method == "HEAD"):
+        print("Redirecting to: ", dict(response_headers)["location"])
+        status_code, response_headers, response_body = request(method, dict(response_headers)["location"], headers, response_body)
+    elif status_code.startswith("303") and "location" in dict(response_headers):
+        print("Redirecting to: ", dict(response_headers)["location"])
+        status_code, response_headers, response_body = request("GET", dict(response_headers)["location"], headers, response_body)
 
     return status_code, response_headers, response_body
 
@@ -64,6 +76,8 @@ def parse_response(response):
     for line in header_lines[1:]:
         key, value = line.split(': ', 1)
         response_headers.append([key, value])
+
+    # print (response_headers)
     
     return status_code, response_headers, body
 
