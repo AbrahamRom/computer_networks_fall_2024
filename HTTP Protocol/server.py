@@ -42,13 +42,42 @@ def handle_client(client_socket):
             else:
                 response_body = "<h1>Welcome</h1>"
 
-        elif method == "POST":  # falta post
-            if uri == "/":
-                response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Hello, World!</h1>"
-            elif uri == "/secure":
-                pass
+        elif method == "POST":
+            if uri.startswith("/secure"):
+                authorized = authoritation_process(client_socket, method, uri, headers)
+                if not authorized:
+                    return
+                else:
+                    try:
+                        # Validate lenght
+                        content_length = int(headers.get("Content-Length", 0))
+                        body = request.split("\r\n\r\n")[1][:content_length]
+
+                        content_type = headers.get("Content-Type", "text/plain")
+                        if content_type == "application/json":
+                            try:
+                                import json
+
+                                json.loads(body)  # Intentar parsear como JSON
+                                response_body = f"<h1>POST request successful! JSON body received: {body}.</h1>"
+                            except json.JSONDecodeError:
+                                raise ValueError("Malformed JSON body")
+                        elif content_type == "application/xml":
+                            try:
+                                import xml.etree.ElementTree as ET
+
+                                ET.fromstring(body)  # Intentar parsear como XML
+                                response_body = f"<h1>POST request successful! XML body received: {body}.</h1>"
+                            except ET.ParseError:
+                                raise ValueError("Malformed XML body")
+                        else:
+                            # Manejar cuerpos de texto o desconocidos
+                            response_body = f"POST request successful! Plain text body received: {body}."
+                    except (IndexError, ValueError) as e:
+                        response_status = "HTTP/1.1 400 Bad Request"
+                        response_body = f"<h1>{str(e)}</h1>"
             else:
-                response = "HTTP/1.1 404 Not Found\r\n\r\n"
+                response_body = "<h1>POST request successful</h1>"
 
         elif method == "HEAD":
             response_headers = [
@@ -77,7 +106,7 @@ def handle_client(client_socket):
             )
         else:
             response_status = "HTTP/1.1 405 Method Not Allowed"
-            response_body = f"Method '{method}' not allowed."
+            response_body = f"<h1>Method '{method}' not allowed.</h1>"
 
         if not response_status:
             response_status = "HTTP/1.1 200 OK"
