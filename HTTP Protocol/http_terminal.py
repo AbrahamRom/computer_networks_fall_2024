@@ -1,14 +1,31 @@
-import sys
 import client
+import argparse
 
-if __name__ == '__main__':
-    # Check if the number of command-line arguments is not equal to 2
-    if len(sys.argv) != 2:
-        # Print usage message and exit with status code 1
-        print("Usage: python http_terminal.py <url>")
-        sys.exit(1)
-    else:
-        # Get the URL from the command-line arguments
-        url = sys.argv[1]
-        # Make a GET request to the specified URL using the client module
-        client.request("GET", url)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="HTTP client")
+    parser.add_argument("-m", "--method", required=True, help="HTTP method, e.g., GET")
+    parser.add_argument(
+        "-u", "--url", required=True, help="URL, e.g., http://localhost:4333/example"
+    )
+    parser.add_argument(
+        "-H",
+        "--header",
+        type=str,
+        default="{}",
+        help='HTTP headers in JSON format, e.g., {"User-Agent": "device"}',
+    )
+    parser.add_argument(
+        "-d", "--data", type=str, default="", help="Body content for POST/PUT requests"
+    )
+
+    args = parser.parse_args()
+
+    method = args.method
+    url = args.url
+    headers = eval(
+        args.header
+    )  # Convert string representation of dictionary to actual dictionary
+    data = args.data
+
+    response = client.request(method, url, headers=headers, body=data)
+    print(response)
