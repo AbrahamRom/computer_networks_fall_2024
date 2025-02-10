@@ -168,6 +168,11 @@ def authoritation_process(client_socket, method, uri, headers):
 
 
 def run_server(host="localhost", port=8080):
+    """
+    Función principal para iniciar el servidor HTTP.
+    Crea el socket, lo enlaza a la dirección y puerto indicados y escucha conexiones entrantes.
+    Cada conexión es manejada en un hilo separado.
+    """
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((host, port))
     server.listen(5)
@@ -176,9 +181,8 @@ def run_server(host="localhost", port=8080):
     while True:
         client_socket, client_address = server.accept()
         print(f"Conexión entrante de {client_address}")
-        Thread(
-            target=handle_client, args=(client_socket,)
-        ).start()  # posiblemente coma faltante
+        # Se inicia un nuevo hilo para atender la conexión del cliente
+        Thread(target=handle_client, args=(client_socket,)).start()
 
 
 if __name__ == "__main__":
