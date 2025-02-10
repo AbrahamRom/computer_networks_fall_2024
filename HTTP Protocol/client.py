@@ -153,23 +153,30 @@ def build_request(method, host, uri, headers, body):
 
 def socket_client(host, port, is_secure):
     """
-    Connect and return the socket object
+    Crea y establece una conexión de socket con el servidor.
+    
+    Parámetros:
+      host      -> Dirección del servidor
+      port      -> Puerto de conexión
+      is_secure -> Booleano que indica si se debe usar SSL (HTTPS)
+    
+    Retorna:
+      Objeto socket conectado.
     """
-    # Create a socket object with IPv4 and TCP
+    # Se crea un socket IPv4 con protocolo TCP.
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # Set a timeout of 10 seconds for the socket operations
+    # Se define un timeout de 10 segundos para las operaciones del socket.
     sock.settimeout(10)
 
-    if is_secure:  # If the URL is https, wrap the socket with SSL
-        # Create a default SSL context
+    if is_secure:  # Si es una conexión HTTPS, se envuelve el socket en un contexto SSL.
+        # Se crea un contexto SSL por defecto.
         context = ssl.create_default_context()
-        # Wrap the socket with SSL for secure communication
+        # Se envuelve el socket para comunicación segura.
         sock = context.wrap_socket(sock, server_hostname=host)
 
-    # Connect the socket to the specified host and port
+    # Se conecta el socket al host y puerto especificados.
     sock.connect((host, port))
 
-    # Return the connected socket object
     return sock
 
 
