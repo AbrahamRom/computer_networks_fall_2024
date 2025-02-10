@@ -1,11 +1,18 @@
 import os, sys
 import json
 
-ruta_raiz = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+# Obtén la ruta absoluta del directorio actual (donde está test.py)
+ruta_actual = os.path.dirname(os.path.abspath(__file__))
+
+# Sube dos niveles para llegar a la raíz del repositorio
+ruta_repo = os.path.abspath(os.path.join(ruta_actual, '..', '..'))
 
 # Agrega la carpeta "HTTP Protocol" al sys.path
-sys.path.append(os.path.join(ruta_raiz, 'HTTP_Protocol'))
-from client import request # Importar la función request del cliente HTTP
+ruta_client = os.path.join(ruta_repo, "HTTP_Protocol")
+sys.path.append(ruta_client)
+
+# Importa la función request desde client.py
+from client import request
 
 def make_request(method, path, headers=None, data=None):
     # Construye la URL completa
