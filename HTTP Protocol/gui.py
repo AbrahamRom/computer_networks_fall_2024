@@ -3,22 +3,30 @@ from CTkTable import CTkTable
 import client
 import chose_options as cho
 
-# CTk configs
-window = CTk()
+# -------------------------
+# Configuración inicial de CTk
+# -------------------------
+window = CTk()  # Se crea la ventana principal de la aplicación
 
+# Configuración de la ventana: tamaño, prohibición de redimensionar, padding y título
 window.geometry("900x630")
 window.resizable(False, False)
 window.config(padx=20, pady=20)
 window.title("HTTP client")
 
-statusCode = StringVar()
-responseHeaders = [["Key", "Value"]]
+# -------------------------
+# Variables globales y estados iniciales
+# -------------------------
+statusCode = StringVar()  # Variable de cadena para mostrar el código de estado en la GUI
+responseHeaders = [["Key", "Value"]]  # Cabecera por defecto para la tabla de respuestas
 
-statusCode.set("Status: none")
+statusCode.set("Status: none")  # Se inicializa el estado en "none"
 
+# Diccionario para gestionar las opciones de encabezados disponibles (True = ya usado, False = disponible)
 headersSelectorDict = {}
-headersResSize = 0
+headersResSize = 0  # Contador del número de encabezados agregados a la tabla de solicitud
 
+# Se inicializa el diccionario con los encabezados definidos en cho_options (ver [chose_options.py](e:/Proyectos/computer_networks_fall_2024/HTTP Protocol/chose_options.py))
 for header in cho.generalHeaders + cho.requestHeaders + cho.entityHeaders:
     headersSelectorDict[header] = False
 
