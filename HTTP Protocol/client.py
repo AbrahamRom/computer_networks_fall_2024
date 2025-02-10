@@ -89,29 +89,36 @@ def request(method, url, headers="", body=""):
     return status_code, response_headers, response_body
 
 
+
 def parse_response(response):
     """
-    Parses the HTTP response into status code, headers, and body
+    Analiza la respuesta HTTP separándola en el código de estado, encabezados y cuerpo.
+    
+    Parámetros:
+      response -> Cadena completa de la respuesta HTTP
+
+    Retorna:
+      status_code      -> Código de estado HTTP extraído de la línea de estado
+      response_headers -> Lista de encabezados en formato [[clave, valor], ...]
+      body             -> Cuerpo del mensaje de respuesta
     """
-    # Split the response into headers and body
+    # Se divide la respuesta en dos secciones: encabezado y cuerpo.
     header_section, body = response.split("\r\n\r\n", 1)
 
-    # Split the header section into individual lines
+    # Se separan las líneas de los encabezados.
     header_lines = header_section.split("\r\n")
 
-    # Extract the status line (first line of the header section)
+    # La primera línea es la línea de estado (por ejemplo "HTTP/1.1 200 OK").
     status_line = header_lines[0]
 
-    # Extract the status code from the status line
+    # Se extrae el código de estado (porción después del primer espacio).
     status_code = status_line.split(" ", 1)[1]
 
-    # Extract the headers from the remaining lines
+    # Se recorren las líneas restantes para extraer cada encabezado.
     response_headers = []
     for line in header_lines[1:]:
         key, value = line.split(": ", 1)
         response_headers.append([key, value])
-
-    # print(response_headers)
 
     return status_code, response_headers, body
 
