@@ -5,44 +5,52 @@ import ssl
 
 def request(method, url, headers="", body=""):
     """
-    Builds the request to HTTP Server
+    Construye y envía una solicitud HTTP al servidor.
+    
+    Parámetros:
+      method  -> Método HTTP (GET, POST, etc.)
+      url     -> URL completa a la que se hace la solicitud
+      headers -> Lista de tuplas con encabezados [(clave, valor), ...]
+      body    -> Contenido del cuerpo de la solicitud
     """
-    # Parse the URL to get host, port, URI, and security status
+    # Se obtiene el host, puerto, URI y el estado de seguridad (si es HTTPS) de la URL.
     host, port, uri, is_secure = parse_url(url)
 
-    # Establish a socket connection to the server
+     # Se establece la conexión de socket con el servidor (con soporte para TLS si es necesario).
     sock = socket_client(host, port, is_secure)
 
-    # Build the HTTP request string
+    # Se construye el string de la solicitud HTTP que se enviará.
     request_string = build_request(method, host, uri, headers, body)
 
-    # Print the request for debugging purposes
+    # Se imprime la solicitud para fines de depuración.
     print(request_string)
 
-    # Send the HTTP request to the server
+   # Se envía la solicitud completa al servidor.
     sock.sendall(request_string.encode())
 
-    # Initialize an empty response
+    
+    # Se inicializa la variable respuesta como un objeto de bytes vacío.
     response = b""
 
-    # Receive the response from the server
+    # Se recibe la respuesta del servidor en bloques de 4096 bytes.
     while True:
         try:
-            data = sock.recv(4096)  # Receive data in chunks of 4096 bytes
+            data = sock.recv(4096)  # Se reciben datos en bloques de 4096 bytes.
             if not data:
-                break  # Exit loop if no more data is received
-            response += data  # Append received data to the response
+                break   # Se sale del bucle si no se reciben más datos.
+            response += data # Se acumulan los datos recibidos.
         except socket.timeout:
-            break  # Exit loop if a timeout occurs
+            break  # Se sale del bucle en caso de que ocurra un timeout.
 
-    # Close the socket connection
+    # Se cierra la conexión de socket.
     sock.close()
 
-    response = response.decode()  # Decode the response from bytes to string
+    response = response.decode() # Se decodifica la respuesta de bytes a una cadena.
 
+    # Se analiza la respuesta para extraer el código de estado, los encabezados y el cuerpo
     status_code, response_headers, response_body = parse_response(response)
 
-    # Redirect if necessary
+     # Si es necesario, se realiza una redirección en base al código de estado y la presencia de un encabezado Location:
 
     if (
         status_code.startswith("300") or status_code.startswith("305")
@@ -70,12 +78,14 @@ def request(method, url, headers="", body=""):
         )
     elif status_code.startswith("303") and "Location" in dict(response_headers):
         print("Redirecting to: ", dict(response_headers)["Location"])
+          # En este caso se fuerza el método GET en la redirección.
         status_code, response_headers, response_body = request(
             "GET",
             dict(response_headers)["Location"],
             headers,
         )
 
+     # Se retorna el código de estado, los encabezados y el cuerpo obtenidos de la respuesta.
     return status_code, response_headers, response_body
 
 
