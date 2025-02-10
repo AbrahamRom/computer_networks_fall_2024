@@ -1,11 +1,17 @@
 import os, sys
 import json
+from HTTP_Protocol.client import request  # Importar la función request del cliente HTTP
 
 def make_request(method, path, headers=None, data=None):
-    headerstr = "-h {}" if headers is None else f" -h {headers}"
-    datastr = "" if data is None else f" -d {data}"
-    response_string = os.popen(f"sh run.sh -m {method} -u http://localhost:8080{path} {headerstr} {datastr}").read()
-    return json.loads(response_string) # JSON con campos status, body y headers
+    url = f"http://localhost:8080{path}"
+    headers_dict = json.loads(headers) if headers else {}
+    status, response_headers, body = request(method, url, headers=headers_dict, body=data)
+    response = {
+        "status": int(status.split()[0]),  # Extraer el código de estado como entero
+        "body": body,
+        "headers": response_headers
+    }
+    return response
 
 # Almacena los resultados de las pruebas
 results = []
@@ -48,11 +54,11 @@ response = make_request("GET", "/secure")
 evaluate_response("GET secure without Authorization", 401, response['status'], "Authorization header missing", response['body'])
 
 print_case("GET secure with valid Authorization", "Testing GET request to '/secure' with valid authorization")
-response = make_request("GET", "/secure", headers='{\\"Authorization\\":\\"Bearer\\ 12345\\"}')
+response = make_request("GET", "/secure", headers='{"Authorization":"Bearer 12345"}')
 evaluate_response("GET secure with valid Authorization", 200, response['status'], "You accessed a protected resource", response['body'])
 
 print_case("GET secure with invalid Authorization", "Testing GET request to '/secure' with invalid authorization")
-response = make_request("GET", "/secure", headers='{\\"Authorization\\":\\ \\"Bearer\\ invalid_token\\"}')
+response = make_request("GET", "/secure", headers='{"Authorization":"Bearer invalid_token"}')
 evaluate_response("GET secure with invalid Authorization", 401, response['status'], "Invalid or missing authorization token", response['body'])
 
 # Ajuste en PUT request
@@ -82,7 +88,7 @@ print_case("Malformed POST body", "Testing POST request with malformed JSON body
 response = make_request(
     "POST",
     "/secure",
-    headers='{\\"Authorization\\":\\ \\"Bearer\\ 12345\\",\\ \\"Content-Type\\":\\ \\"application/json\\"}',
+    headers='{"Authorization":"Bearer 12345","Content-Type":"application/json"}',
     data='{"key":}'
 )
 evaluate_response(
@@ -98,7 +104,7 @@ print_case("Malformed POST body without Authorization", "Testing POST request wi
 response = make_request(
     "POST",
     "/secure",
-    headers='{\\"Content-Type\\":\\ \\"application/json\\"}',
+    headers='{"Content-Type":"application/json"}',
     data='{"key":}'
 )
 evaluate_response(
