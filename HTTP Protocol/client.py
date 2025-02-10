@@ -125,15 +125,28 @@ def parse_response(response):
 
 def build_request(method, host, uri, headers, body):
     """
-    Builts the request string to be sent to the server
+    Construye el string de la solicitud HTTP a enviar.
+    
+    Parámetros:
+      method  -> Método HTTP (GET, POST, etc.)
+      host    -> Host obtenido de la URL
+      uri     -> URI o path de la URL
+      headers -> Lista de tuplas con los encabezados
+      body    -> Cuerpo de la solicitud
+    
+    Retorna:
+      La cadena completa de la solicitud HTTP.
     """
-
+    # Se construye la línea inicial de la solicitud y se agrega el encabezado 'Host'.
     request = f"{method} {uri} HTTP/1.1\r\nHost: {host}\r\n"
 
-    for key, value in headers:  # Add headers to the request
+    # Se agregan los encabezados proporcionados.
+    for key, value in headers:
         request += f"{key}: {value}\r\n"
-    request += "\r\n"  # Add a blank line to separate headers and body
-    request += body  # Add the body to the request
+    # Se deja una línea en blanco para separar los encabezados del cuerpo.
+    request += "\r\n"
+    # Se añade el cuerpo de la solicitud (si lo hubiese).
+    request += body
 
     return request
 
