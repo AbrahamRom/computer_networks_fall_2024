@@ -144,9 +144,15 @@ def handle_client(client_socket):
     client_socket.close()
 
 def authoritation_process(client_socket, method, uri, headers):
+    """
+    Función para gestionar la autorización en solicitudes a recursos seguros.
+    Se verifica la presencia y validez del encabezado Authorization.
+    """
     if "Authorization" in headers:
+        # Se extrae y limpia el token de autenticación
         auth_token = headers["Authorization"].replace("Bearer ", "").strip()
         if auth_token != AUTHORIZED_TOKEN:
+            # Token inválido: se envía respuesta 401 Unauthorized
             response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/html\r\n\r\n<h1>Invalid or missing authorization token.</h1>"
             client_socket.sendall(response.encode())
             client_socket.close()
@@ -154,6 +160,7 @@ def authoritation_process(client_socket, method, uri, headers):
         else:
             return True
     else:
+        # Si falta el encabezado de autorización, se retorna 401 Unauthorized
         response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/html\r\n\r\n<h1>Authorization header missing.</h1>"
         client_socket.sendall(response.encode())
         client_socket.close()
