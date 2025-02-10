@@ -31,33 +31,34 @@ for header in cho.generalHeaders + cho.requestHeaders + cho.entityHeaders:
     headersSelectorDict[header] = False
 
 
-# Handlers
+# -------------------------
+# Handlers (manejadores de eventos)
+# -------------------------
 def addBtnHandler():
     global headersResSize
+    # Si no se ha seleccionado un encabezado, se retorna sin hacer nada
     if headersKeySelector.get() == "":
         return
 
-    # append to table
+    # Se agrega una fila a la tabla de solicitud con el encabezado y su valor correspondiente
     headersReqTable.add_row(
         [headersKeySelector.get(), headerValues.get()], headersResSize + 1
     )
 
-    # delete option
+    # Se marca el encabezado como usado (True) en el diccionario
     headersSelectorDict[headersKeySelector.get()] = True
 
-    values = [
-        header for header in headersSelectorDict if headersSelectorDict[header] == False
-    ]
-    delValues = [
-        header for header in headersSelectorDict if headersSelectorDict[header] == True
-    ]
-    # update options
+    # Se generan nuevas listas de encabezados disponibles y de los ya agregados para actualizar los menús
+    values = [header for header in headersSelectorDict if headersSelectorDict[header] == False]
+    delValues = [header for header in headersSelectorDict if headersSelectorDict[header] == True]
+    # Actualiza el menú de selección de encabezados disponibles
     headersKeySelector.configure(values=values)
     headersKeySelector.set(values[0] if len(values) > 0 else "")
+    # Actualiza el menú de eliminación de encabezados disponibles
     headersRemoverKeySelector.configure(values=delValues)
     headersRemoverKeySelector.set(delValues[0])
 
-    headersResSize += 1
+    headersResSize += 1  # Incrementa el contador de encabezados agregados
 
 
 def removeBtnHandler():
