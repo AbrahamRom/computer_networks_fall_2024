@@ -88,25 +88,31 @@ def removeBtnHandler():
 def sendBtnHandler():
     global responseHeaders
 
-    headers = [
-        (row[0], row[1]) for row in headersReqTable.values[1:]
-    ]  # Skip the header row
+    # Se extraen los encabezados ingresados en la tabla. Se omite la fila de cabecera
+    headers = [(row[0], row[1]) for row in headersReqTable.values[1:]]
+    # Se realiza el request utilizando los valores de la interfaz:
+    # - método desde el menú desplegable
+    # - URL desde el campo de texto
+    # - encabezados y cuerpo desde el textbox correspondiente
     status, response_headers, body = client.request(
         methodMenu.get(), URL.get(), headers, bodyReqFrame.get(0.0, "end")
     )
+    # Se formatea la respuesta para incluir como cabecera la fila por defecto
     responseHeaders = [["Key", "Value"]] + response_headers
 
-    print(f"[body] {body}")
+    print(f"[body] {body}")  # Imprime el cuerpo de la respuesta en la consola para depuración
 
-    statusCode.set("Status: " + status)
+    statusCode.set("Status: " + status)  # Actualiza la etiqueta del estado con el código de respuesta
 
+    # Se limpia y se actualiza la tabla de respuesta con los nuevos encabezados
     headersResTable.delete_rows([i for i in range(0, headersResTable.rows)])
-
     for header in responseHeaders:
         headersResTable.add_row(header, headersResTable.rows)
 
+    # Se actualiza el área de texto del cuerpo de la respuesta
     bodyResFrame.delete(0.0, "end")
     bodyResFrame.insert(0.0, body)
+
 
 
 # request section
