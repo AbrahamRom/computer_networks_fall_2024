@@ -182,33 +182,38 @@ def socket_client(host, port, is_secure):
 
 def parse_url(url):
     """
-    Parse the URL string and get host, port and URI
+    Analiza la URL y extrae el host, puerto y URI.
+    
+    Parámetros:
+      url -> URL completa en formato cadena
+      
+    Retorna:
+      host, port, uri, is_secure -> Componentes extraídos. is_secure es True si es HTTPS.
     """
-    # Default port and security
+    # Se definen los valores por defecto: puerto 80 y sin seguridad.
     port = 80
     is_secure = False
 
-    # Check if the URL starts with http:// or https://
+    # Se revisa si la URL comienza con http:// o https://
     if url.startswith("http://"):
-        # Remove the http:// prefix
-        url = url[7:]
+        url = url[7:]  # Se elimina el prefijo "http://"
     elif url.startswith("https://"):
-        # Remove the https:// prefix and set port to 443
-        url = url[8:]
-        port = 443
+        url = url[8:]  # Se elimina el prefijo "https://"
+        port = 443   # Se asigna el puerto 443 para conexiones seguras
         is_secure = True
 
-    # Extract host, port, and URI using regex
+    # Se utiliza una expresión regular para extraer el host, el puerto (si existe) y la URI.
     match = re.match(r"([^:/?#]+)(?::(\d+))?(.*)", url)
     if match:
-        host = match.group(1)  # Extract host
+        host = match.group(1)  # Se extrae el host.
         if match.group(2):
-            port = int(match.group(2))  # Extract port if specified
-        uri = match.group(3) if match.group(3) else "/"  # Extract URI or set to '/'
+            port = int(match.group(2))  # Se extrae el puerto si está especificado.
+        uri = match.group(3) if match.group(3) else "/"  # Se extrae la URI o se asigna '/' si está vacía.
     else:
-        raise ValueError("Invalid URL")  # Raise error if URL is invalid
+        raise ValueError("Invalid URL")  # Se arroja un error si la URL no es válida.
 
-    return host, port, uri, is_secure  # Return parsed components
+    return host, port, uri, is_secure  # Se retornan los componentes parseados.
 
 
+# Llamada de prueba a la función request para una URL externa.
 request("GET", "http://google.com/")
