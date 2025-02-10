@@ -62,27 +62,27 @@ def addBtnHandler():
 
 
 def removeBtnHandler():
+    # Si no se ha seleccionado ningún encabezado a remover, se retorna sin acción
     if headersRemoverKeySelector.get() == "":
         return
 
+    # Marca el encabezado como no utilizado (False)
     headersSelectorDict[headersRemoverKeySelector.get()] = False
 
+    # Busca y elimina la fila correspondiente en la tabla de solicitud
     for i, header in enumerate(headersReqTable.values):
         if header[0] == headersRemoverKeySelector.get():
             headersReqTable.delete_row(i)
             break
 
-    values = [
-        header for header in headersSelectorDict if headersSelectorDict[header] == False
-    ]
-    delValues = [
-        header for header in headersSelectorDict if headersSelectorDict[header] == True
-    ]
-    # update options
+    # Actualiza las listas de encabezados disponibles y los ya utilizados tras la eliminación
+    values = [header for header in headersSelectorDict if headersSelectorDict[header] == False]
+    delValues = [header for header in headersSelectorDict if headersSelectorDict[header] == True]
     headersKeySelector.configure(values=values)
     headersKeySelector.set(values[0])
     headersRemoverKeySelector.configure(values=delValues)
     headersRemoverKeySelector.set(delValues[0] if len(delValues) > 0 else "")
+
 
 
 def sendBtnHandler():
