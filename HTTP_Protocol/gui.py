@@ -2,6 +2,7 @@ from customtkinter import *
 from CTkTable import CTkTable
 import client
 import chose_options as cho
+import json
 
 # CTk configs
 window = CTk()
@@ -82,14 +83,22 @@ def sendBtnHandler():
     headers = [
         (row[0], row[1]) for row in headersReqTable.values[1:]
     ]  # Skip the header row
-    status, response_headers, body = client.request(
-        methodMenu.get(), URL.get(), headers, bodyReqFrame.get(0.0, "end")
+    response = json.loads(
+        client.request(
+            methodMenu.get(), URL.get(), headers, bodyReqFrame.get(0.0, "end")
+        )
     )
-    responseHeaders = [["Key", "Value"]] + response_headers
+
+    status = response["status"]
+    response_headers = response["headers"]
+    body = response["body"]
+    responseHeaders = [["Key", "Value"]] + [
+        [key, value] for key, value in response_headers.items()
+    ]
 
     print(f"[body] {body}")
 
-    statusCode.set("Status: " + status)
+    statusCode.set("Status: " + str(status))
 
     headersResTable.delete_rows([i for i in range(0, headersResTable.rows)])
 
