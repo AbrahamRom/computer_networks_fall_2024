@@ -11,6 +11,10 @@ def request(method, url, headers="", body=""):
     # Parse the URL to get host, port, URI, and security status
     host, port, uri, is_secure = parse_url(url)
 
+    # Ensure headers is a list of tuples
+    if isinstance(headers, dict):
+        headers = list(headers.items())
+
     # Establish a socket connection to the server
     sock = socket_client(host, port, is_secure)
 
