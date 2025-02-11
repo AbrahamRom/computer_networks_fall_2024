@@ -25,4 +25,4 @@ if [ -z "$method" ] || [ -z "$url" ]; then
   exit 1
 fi
 
-python3 ./HTTP_Protocol/client.py -m "$method" -u "$url" -H "$headers" -d "$data"
+python3 ./client/ClientHttp.py -m "$method" -u "$url" -H "$headers" -d "$data"
