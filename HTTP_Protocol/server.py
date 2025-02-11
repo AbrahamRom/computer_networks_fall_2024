@@ -156,9 +156,7 @@ def run_server(host="localhost", port=8080):
     while True:
         client_socket, client_address = server.accept()
         print(f"Conexión entrante de {client_address}")
-        Thread(
-            target=handle_client, args=(client_socket,)
-        ).start()  # posiblemente coma faltante
+        Thread(target=handle_client, args=(client_socket,)).start()
 
 
 if __name__ == "__main__":

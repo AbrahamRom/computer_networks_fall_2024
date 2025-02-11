@@ -170,18 +170,18 @@ responseDataFields = CTkTabview(window, width=870, height=200, anchor="nw")
 
 headersResTab = responseDataFields.add("Headers")
 bodyResTab = responseDataFields.add("Body")
-cookiesResTab = responseDataFields.add("Cookies")
+# cookiesResTab = responseDataFields.add("Cookies")
 
 headersResFrame = CTkScrollableFrame(headersResTab, width=830, height=200)
 bodyResFrame = CTkTextbox(bodyResTab, width=850, height=210)
-cookiesResFrame = CTkScrollableFrame(cookiesResTab, width=830, height=200)
+# cookiesResFrame = CTkScrollableFrame(cookiesResTab, width=830, height=200)
 
 headersResTable = CTkTable(headersResFrame, column=2, values=responseHeaders)
-cookiesResTable = CTkTable(
-    cookiesResFrame,
-    column=7,
-    values=[["Name", "Value", "Domain", "Path", "Expires", "HttpOnly", "Secure"]],
-)
+# cookiesResTable = CTkTable(
+#     cookiesResFrame,
+#     column=7,
+#     values=[["Name", "Value", "Domain", "Path", "Expires", "HttpOnly", "Secure"]],
+# )
 
 responseLabel.grid(row=2, column=0)
 statusCodeLabel.grid(row=2, column=1, columnspan=2)
@@ -190,9 +190,9 @@ responseDataFields.grid(row=3, column=0, columnspan=3)
 
 headersResFrame.pack(fill="both", expand=True)
 bodyResFrame.pack(fill="both", expand=True)
-cookiesResFrame.pack(fill="both", expand=True)
+# cookiesResFrame.pack(fill="both", expand=True)
 
 headersResTable.pack(fill="both", expand=True)
-cookiesResTable.pack(fill="both", expand=True)
+# cookiesResTable.pack(fill="both", expand=True)
 
 window.mainloop()

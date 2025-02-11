@@ -1,5 +1,46 @@
 methods = ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"]
 
-generalHeaders = ["Cache-Control", "Connection", "Date", "Pragma", "Trailer", "Transfer-Enconding", "Upgrade", "Via", "Warning"]
-requestHeaders = ["Accept","Accept-Charset","Accept-Encoding","Accept-Language", "Authorization", "Expect", "From", "Host", "If-Match", "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Max-Forwards", "Proxy-Authorization","Range", "Referer", "TE", "User-Agent" ]
-entityHeaders = ["Allow", "Content-Encoding", "Content-Language","Content-Length", "Content-Location", "Content-MD5", "Content-Range", "Content-Type", "Expires", "Last-Modified"]
+generalHeaders = [
+    "Cache-Control",
+    "Connection",
+    "Date",
+    "Pragma",
+    "Trailer",
+    "Transfer-Enconding",
+    "Upgrade",
+    "Via",
+    "Warning",
+]
+requestHeaders = [
+    "Accept",
+    "Accept-Charset",
+    "Accept-Encoding",
+    "Accept-Language",
+    "Authorization",
+    "Expect",
+    "From",
+    "Host",
+    "If-Match",
+    "If-Modified-Since",
+    "If-None-Match",
+    "If-Range",
+    "If-Unmodified-Since",
+    "Max-Forwards",
+    "Proxy-Authorization",
+    "Range",
+    "Referer",
+    "TE",
+    "User-Agent",
+]
+entityHeaders = [
+    "Allow",
+    "Content-Encoding",
+    "Content-Language",
+    "Content-Length",
+    "Content-Location",
+    "Content-MD5",
+    "Content-Range",
+    "Content-Type",
+    "Expires",
+    "Last-Modified",
+]
