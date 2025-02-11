@@ -18,7 +18,7 @@ def request(method, url, headers="", body=""):
     request_string = build_request(method, host, uri, headers, body)
 
     # Print the request for debugging purposes
-    print(request_string)
+    # print(request_string)
 
     # Send the HTTP request to the server
     sock.sendall(request_string.encode())

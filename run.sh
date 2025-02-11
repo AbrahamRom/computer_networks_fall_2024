@@ -30,4 +30,4 @@ if [ -z "$method" ] || [ -z "$url" ]; then
 fi
 
 export PYTHONPATH=$PWD
-python3 HTTP Protocol/http_terminal.py -m "$method" -u "$url" -h "$headers" -d "$data"
+python3 HTTP_Protocol/http_terminal.py -m "$method" -u "$url" -h "$headers" -d "$data"
