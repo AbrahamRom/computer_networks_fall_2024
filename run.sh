@@ -2,4 +2,4 @@
 
 # Replace the next shell command with the entrypoint of your solution
 
-python './HTTP Protocol/http_terminal.py' "$@"
+python3 './HTTP Protocol/http_terminal.py' "$@"
