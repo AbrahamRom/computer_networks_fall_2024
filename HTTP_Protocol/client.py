@@ -1,186 +1,199 @@
 import socket
-import re
 import ssl
+import argparse
 import json
+import re
+from CharacterUtils import CharacterUtils
 
+class HTTPClient:
+    def __init__(self, url):
+        host, port, path = parse_url(url)
+        self.host = host
+        self.port = port
+        self.path = path
+        self.use_https = url.startswith("https://")
 
-def request(method, url, headers="", body=""):
-    """
-    Builds the request to HTTP Server
-    """
-    # Parse the URL to get host, port, URI, and security status
-    host, port, uri, is_secure = parse_url(url)
+    def send_request(self, method: str, headers: str, data: str):
+        req_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        if self.use_https:
+            context = ssl.create_default_context()
+            req_socket = context.wrap_socket(req_socket, server_hostname=self.host)
+            self.port = 443
+            
+        req_socket.connect((self.host, self.port))        
+        request = build_http_request(method=method, uri=self.path, headers=headers, body=data)
+        req_socket.send(request.encode())
+        response = self.receive_response(req_socket)
+        req_socket.close()
+        return response
 
-    # Establish a socket connection to the server
-    sock = socket_client(host, port, is_secure)
-
-    # Build the HTTP request string
-    request_string = build_request(method, host, uri, headers, body)
-
-    # Print the request for debugging purposes
-    print(request_string)
-
-    # Send the HTTP request to the server
-    sock.sendall(request_string.encode())
-
-    # Initialize an empty response
-    response = b""
-
-    # Receive the response from the server
-    while True:
-        try:
-            data = sock.recv(4096)  # Receive data in chunks of 4096 bytes
+    
+     
+    def receive_response(self, req_socket: socket.socket):
+        head = ""
+        while True:
+            data = req_socket.recv(1)
             if not data:
-                break  # Exit loop if no more data is received
-            response += data  # Append received data to the response
-        except socket.timeout:
-            break  # Exit loop if a timeout occurs
-
-    # Close the socket connection
-    sock.close()
-
-    response = response.decode("iso-8859-1")  # Decode the response from bytes to string
-
-    status_code, response_headers, response_body = parse_response(response)
-
-    # Redirect if necessary
-
-    if (
-        status_code.startswith("300") or status_code.startswith("305")
-    ) and "Location" in dict(response_headers):
-        print("Redirecting to: ", dict(response_headers)["Location"])
-        status_code, response_headers, response_body = request(
-            method,
-            dict(response_headers)["Location"],
-            headers,
-        )
-    elif (
-        (
-            status_code.startswith("301")
-            or status_code.startswith("302")
-            or status_code.startswith("307")
-        )
-        and "Location" in dict(response_headers)
-        and (method == "GET" or method == "HEAD")
-    ):
-        print("Redirecting to: ", dict(response_headers)["Location"])
-        status_code, response_headers, response_body = request(
-            method,
-            dict(response_headers)["Location"],
-            headers,
-        )
-    elif status_code.startswith("303") and "Location" in dict(response_headers):
-        print("Redirecting to: ", dict(response_headers)["Location"])
-        status_code, response_headers, response_body = request(
-            "GET",
-            dict(response_headers)["Location"],
-            headers,
-        )
-
-    response_json = {
-        "status": int(status_code.split()[0]),
-        "headers": {key: value for key, value in response_headers},
-        "body": response_body,
-    }
-
-    # print(response_json)
-
-    return json.dumps(response_json)
+                break
+            head += data.decode("iso-8859-1")
+            if head.endswith(CharacterUtils.crlf * 2):
+                break
+        
+        header_contents = parse_response_head(head)
+        body = ""
+        
+        if "Transfer-Encoding" in header_contents["headers_fields"] and header_contents["headers_fields"]["Transfer-Encoding"] == "chunked":
+            body = self.chunked_body(req_socket)
+        elif "Content-Length" in header_contents["headers_fields"]:
+            body = req_socket.recv(int(header_contents["headers_fields"]["Content-Length"])).decode("iso-8859-1")
+        
+        status_line = f"{header_contents['http_version']} {header_contents['status_code']} {header_contents['reason_phrase']}"
+        return {
+            "status_line": status_line,
+            "http_version": header_contents['http_version'],
+            "status": header_contents['status_code'],
+            "reason": header_contents['reason_phrase'],
+            "headers": header_contents["headers_fields"],
+            "body": body
+        }
 
 
-def parse_response(response):
-    """
-    Parses the HTTP response into status code, headers, and body
-    """
-    # Split the response into headers and body
-    header_section, body = response.split("\r\n\r\n", 1)
 
-    # Split the header section into individual lines
-    header_lines = header_section.split("\r\n")
-
-    # Extract the status line (first line of the header section)
-    status_line = header_lines[0]
-
-    # Extract the status code from the status line
-    status_code = status_line.split(" ", 1)[1]
-
-    # Extract the headers from the remaining lines
-    response_headers = []
-    for line in header_lines[1:]:
-        key, value = line.split(": ", 1)
-        response_headers.append([key, value])
-
-    # print(response_headers)
-
-    return status_code, response_headers, body
-
-
-def build_request(method, host, uri, headers, body):
-    """
-    Builts the request string to be sent to the server
-    """
-
-    request = f"{method} {uri} HTTP/1.1\r\nHost: {host}\r\n"
-
-    for key, value in headers:  # Add headers to the request
-        request += f"{key}: {value}\r\n"
-    request += "\r\n"  # Add a blank line to separate headers and body
-    request += body  # Add the body to the request
-
-    return request
+    
+    def chunked_body(self, req_socket: socket.socket):
+        body = b''
+        while True:
+            chunk_size_line = b''
+            while True:
+                byte = req_socket.recv(1)
+                if not byte:
+                    raise ConnectionError("Unexpected EOF")
+                chunk_size_line += byte
+                if chunk_size_line.endswith(CharacterUtils.crlf.encode()):
+                    break
+            
+            chunk_size_str = chunk_size_line.strip().split(b';', 1)[0]
+            chunk_size = int(chunk_size_str, 16)
+            if chunk_size == 0:
+                break
+            
+            chunk_data = b''
+            while len(chunk_data) < chunk_size:
+                remaining = chunk_size - len(chunk_data)
+                chunk_data += req_socket.recv(remaining)
+            
+            body += chunk_data
+            
+            crlf = req_socket.recv(2)
+        
+        return body.decode("iso-8859-1")
 
 
-def socket_client(host, port, is_secure):
-    """
-    Connect and return the socket object
-    """
-    # Create a socket object with IPv4 and TCP
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # Set a timeout of 10 seconds for the socket operations
-    sock.settimeout(10)
+def parse_response_head(head: str) -> dict:
+        """Parses the response head to extract the HTTP version, status code, reason phrase, and headers."""
+        status_line, headers_section = head.split(CharacterUtils.crlf, 1)
+        headers_list = headers_section.split(CharacterUtils.crlf)
+        
+        header_fields = {}
+        for header in headers_list:
+            if not header:
+                continue
+            key, value = re.split(r":\s+", header, 1)
+            header_fields[key] = value
 
-    if is_secure:  # If the URL is https, wrap the socket with SSL
-        # Create a default SSL context
-        context = ssl.create_default_context()
-        # Wrap the socket with SSL for secure communication
-        sock = context.wrap_socket(sock, server_hostname=host)
+        http_version, status_code, reason_phrase = status_line.split(CharacterUtils.space, 2)
 
-    # Connect the socket to the specified host and port
-    sock.connect((host, port))
-
-    # Return the connected socket object
-    return sock
+        return {
+            "http_version": http_version,
+            "status_code": int(status_code),
+            "reason_phrase": reason_phrase,
+            "headers_fields": header_fields
+        }
 
 
-def parse_url(url):
-    """
-    Parse the URL string and get host, port and URI
-    """
-    # Default port and security
-    port = 80
-    is_secure = False
+def parse_args():
+    parser = argparse.ArgumentParser(description="Send an HTTP request.")
+    parser.add_argument("-m", "--method", required=True, help="HTTP method")
+    parser.add_argument("-u", "--url", required=True, help="Target URL")
+    parser.add_argument("-H", "--headers", default="{}", help="Headers in JSON format")
+    parser.add_argument("-d", "--data", default="", help="Request body")
+    return vars(parser.parse_args())
 
-    # Check if the URL starts with http:// or https://
+def main():
+    args = parse_args()
+    client = HTTPClient(args["url"])
+    response = client.send_request(
+        method=args["method"].upper(),
+        headers=args["headers"],
+        data=args["data"]
+    )
+    print(json.dumps(response, indent=4))
+
+def format_http_version(min: int, max: int):
+    return "HTTP" + "/" + str(min) + '.' + str(max)
+
+    
+def parse_url(url: str):
     if url.startswith("http://"):
-        # Remove the http:// prefix
-        url = url[7:]
+        url = url[7:] 
+        default_port = 80
     elif url.startswith("https://"):
-        # Remove the https:// prefix and set port to 443
-        url = url[8:]
-        port = 443
-        is_secure = True
-
-    # Extract host, port, and URI using regex
-    match = re.match(r"([^:/?#]+)(?::(\d+))?(.*)", url)
-    if match:
-        host = match.group(1)  # Extract host
-        if match.group(2):
-            port = int(match.group(2))  # Extract port if specified
-        uri = match.group(3) if match.group(3) else "/"  # Extract URI or set to '/'
+        url = url[8:] 
+        default_port = 443
     else:
-        raise ValueError("Invalid URL")  # Raise error if URL is invalid
+        default_port = 80
 
-    return host, port, uri, is_secure  # Return parsed components
+    # Split the host and path
+    split_index = url.find("/")
+    if split_index == -1:
+        domain_part = url
+        path = "/"
+    else:
+        domain_part = url[:split_index]
+        path = url[split_index:]
+
+    # Extract port if specified
+    port_index = domain_part.find(":")
+    if port_index == -1:
+        host = domain_part
+        port = default_port
+    else:
+        host = domain_part[:port_index]
+        port = int(domain_part[port_index + 1:])
+
+    return host, port, path
+
+def is_supported_method(method: str) -> bool:
+    """Checks if the given method is a valid HTTP method."""
+    return method in ["OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "CONNECT"]
+
+    
+def create_request_line(method: str, uri: str, http_version: str) -> str:
+    """Constructs the request line using the HTTP method, URI, and version."""
+    separator = CharacterUtils.space
+    line_break = CharacterUtils.crlf
+    return method + separator + uri + separator + http_version + line_break
+
+    
+def format_headers(headers_json: str) -> str:
+    """Formats HTTP headers from a JSON string representation."""
+    if not headers_json:
+        return ""
+    headers_dict = json.loads(headers_json)
+    headers = ""
+    for key, value in headers_dict.items():
+        headers += key + ": " + value + CharacterUtils.crlf
+    return headers
 
 
-# request("GET", "http://google.com/")
+def build_http_request(method: str, uri: str, headers: str = None, body: str = None) -> str:
+    """Builds the complete HTTP request by assembling the request line, headers, and body."""
+    request_line = create_request_line(method, uri, format_http_version(1, 1))
+    headers_section = format_headers(headers)
+    return request_line + headers_section + CharacterUtils.crlf + (body if body else "")
+
+
+
+if __name__ == "__main__":
+    main()
