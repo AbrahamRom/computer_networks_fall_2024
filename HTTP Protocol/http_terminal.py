@@ -2,21 +2,16 @@ import client
 import argparse
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="HTTP client")
-    parser.add_argument("-m", "--method", required=True, help="HTTP method, e.g., GET")
+    parser = argparse.ArgumentParser(description="HTTP client", add_help=False)
+    parser.add_argument("-m", "--method", required=True)
+    parser.add_argument("-u", "--url", required=True)
     parser.add_argument(
-        "-u", "--url", required=True, help="URL, e.g., http://localhost:4333/example"
-    )
-    parser.add_argument(
-        "-H",
+        "-h",
         "--header",
         type=str,
         default="{}",
-        help='HTTP headers in JSON format, e.g., {"User-Agent": "device"}',
     )
-    parser.add_argument(
-        "-d", "--data", type=str, default="", help="Body content for POST/PUT requests"
-    )
+    parser.add_argument("-d", "--data", type=str, default="")
 
     args = parser.parse_args()
 
@@ -28,4 +23,4 @@ if __name__ == "__main__":
     data = args.data
 
     response = client.request(method, url, headers=headers, body=data)
-    print(response)
+    # print(response)

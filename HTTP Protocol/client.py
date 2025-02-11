@@ -1,6 +1,7 @@
 import socket
 import re
 import ssl
+import json
 
 
 def request(method, url, headers="", body=""):
@@ -38,7 +39,7 @@ def request(method, url, headers="", body=""):
     # Close the socket connection
     sock.close()
 
-    response = response.decode()  # Decode the response from bytes to string
+    response = response.decode("iso-8859-1")  # Decode the response from bytes to string
 
     status_code, response_headers, response_body = parse_response(response)
 
@@ -76,7 +77,15 @@ def request(method, url, headers="", body=""):
             headers,
         )
 
-    return status_code, response_headers, response_body
+    response_json = {
+        "status": int(status_code.split()[0]),
+        "headers": {key: value for key, value in response_headers},
+        "body": response_body,
+    }
+
+    # print(response_json)
+
+    return json.dumps(response_json)
 
 
 def parse_response(response):
@@ -174,4 +183,4 @@ def parse_url(url):
     return host, port, uri, is_secure  # Return parsed components
 
 
-request("GET", "http://google.com/")
+# request("GET", "http://google.com/")
