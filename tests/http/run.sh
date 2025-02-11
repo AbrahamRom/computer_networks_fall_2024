@@ -16,5 +16,3 @@ if [[ $? -ne 0 ]]; then
   echo "HTTP test failed"
   exit 1
 fi
-
-kill $SERVER_PID
