@@ -1,37 +1,11 @@
 import os, sys
 import json
 
-# Obtén la ruta absoluta del directorio actual (donde está test.py)
-ruta_actual = os.path.dirname(os.path.abspath(__file__))
-
-# Sube dos niveles para llegar a la raíz del repositorio
-ruta_repo = os.path.abspath(os.path.join(ruta_actual, '..', '..'))
-
-# Agrega la carpeta "HTTP Protocol" al sys.path
-ruta_client = os.path.join(ruta_repo, "HTTP_Protocol")
-sys.path.append(ruta_client)
-
-# Importa la función request desde client.py
-from client import request
-
 def make_request(method, path, headers=None, data=None):
-    # Construye la URL completa
-    url = f"http://localhost:8080{path}"
-    
-    # Convierte los encabezados de JSON a un diccionario si se proporcionan
-    headers_dict = json.loads(headers) if headers else {}
-    
-    # Realiza la solicitud HTTP utilizando la función request del cliente
-    status, response_headers, body = request(method, url, headers=headers_dict, body=data)
-    
-    # Construye la respuesta en un formato manejable
-    response = {
-        "status": int(status.split()[0]),  # Extrae el código de estado como entero
-        "body": body,
-        "headers": response_headers
-    }
-    
-    return response
+    headerstr = "-h {}" if headers is None else f" -h {headers}"
+    datastr = "" if data is None else f" -d {data}"
+    response_string = os.popen(f"sh run.sh -m {method} -u http://localhost:8080{path} {headerstr} {datastr}").read()
+    return json.loads(response_string) # JSON con campos status, body y headers
 
 # Almacena los resultados de las pruebas
 results = []
@@ -58,6 +32,12 @@ def evaluate_response(case, expected_status, actual_status, expected_body=None, 
 # Pruebas de casos simples
 print_case("GET root", "Testing a simple GET request to '/' without authorization")
 response = make_request("GET", "/")
+evaluate_response("GET root", 200, response['status'], "Welcome to the server!", response['body'])
+
+print_case("POST simple body", "Testing POST request to '/' with a plain text body")
+response = make_request("POST", "/", data="Hello, server!")
+evaluate_response("POST simple body", 200, response['status'], "POST request successful", response['body'])
+
 print_case("HEAD root", "Testing a simple HEAD request to '/' without authorization")
 response = make_request("HEAD", "/")
 evaluate_response("HEAD root", 200, response['status'])
