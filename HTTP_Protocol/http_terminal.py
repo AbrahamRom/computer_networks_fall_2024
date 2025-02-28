@@ -11,7 +11,7 @@ if __name__ == "__main__":
         type=str,
         default="{}",
     )
-    parser.add_argument("-d", "--data", type=str, default="")
+    parser.add_argument("-b", "--data", type=str, default="")
 
     args = parser.parse_args()
 

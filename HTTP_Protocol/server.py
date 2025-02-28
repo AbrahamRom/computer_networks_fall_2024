@@ -147,7 +147,7 @@ def authoritation_process(client_socket, method, uri, headers):
         return False
 
 
-def run_server(host="localhost", port=8080):
+def run_server(host="0.0.0.0", port=8080):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((host, port))
     server.listen(5)
